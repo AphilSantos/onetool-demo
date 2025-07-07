@@ -22,6 +22,19 @@ export default function Home() {
     onClose: () => {},
   });
 
+  // Generate a consistent user ID for this session
+  const [userId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      let storedUserId = localStorage.getItem('pica_user_id')
+      if (!storedUserId) {
+        storedUserId = `user_${Math.random().toString(36).substr(2, 9)}`
+        localStorage.setItem('pica_user_id', storedUserId)
+      }
+      return storedUserId
+    }
+    return 'user_123' // fallback for SSR
+  })
+
   const {
     messages,
     handleSubmit,
@@ -33,6 +46,9 @@ export default function Home() {
     status,
   } = useChat({
     maxSteps: 20,
+    body: {
+      userId: userId
+    }
   });
 
   const inputRef = useRef<HTMLTextAreaElement>(null);

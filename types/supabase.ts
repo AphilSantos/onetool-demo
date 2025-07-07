@@ -33,6 +33,36 @@ export interface Database {
         }
         Relationships: []
       }
+      ai_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          messages: Json
+          current_task: string | null
+          task_status: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          messages?: Json
+          current_task?: string | null
+          task_status?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          messages?: Json
+          current_task?: string | null
+          task_status?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -48,3 +78,7 @@ export interface Database {
     }
   }
 }
+
+export type AISession = Database['public']['Tables']['ai_sessions']['Row']
+export type AISessionInsert = Database['public']['Tables']['ai_sessions']['Insert']
+export type AISessionUpdate = Database['public']['Tables']['ai_sessions']['Update']

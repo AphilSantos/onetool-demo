@@ -5,6 +5,7 @@ import { ChatRequestOptions } from "ai";
 import { CreateMessage } from "ai";
 import { Message } from "ai";
 import { useEffect } from "react";
+import { AISessionManager } from "@/lib/ai-session";
 
 interface ChatInputProps {
   inputRef: RefObject<HTMLTextAreaElement>;
@@ -38,6 +39,22 @@ export function ChatInput({
         behavior: 'smooth'
       });
     });
+  };
+
+  const clearChat = async () => {
+    try {
+      // Get user ID from localStorage
+      const userId = localStorage.getItem('pica_user_id');
+      if (userId) {
+        const sessionManager = new AISessionManager(userId);
+        await sessionManager.clearSession();
+      }
+      window.location.reload();
+    } catch (error) {
+      console.error('Error clearing chat:', error);
+      // Fallback to just reloading
+      window.location.reload();
+    }
   };
 
   return (
@@ -112,7 +129,7 @@ export function ChatInput({
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className="mt-2 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-sm border border-green-800/20 text-gray-400 hover:text-green-500 hover:border-green-500 hover:bg-green-900/20 transition-all duration-300 text-xs shadow-lg hover:shadow-green-900/20"
-              onClick={() => window.location.reload()}
+              onClick={clearChat}
             >
               Clear chat
             </motion.button>

@@ -14,19 +14,6 @@ export async function POST(request: Request) {
   const sessionManager = new AISessionManager(userId);
 
   try {
-    // Get existing session to restore conversation history
-    const existingSession = await sessionManager.getSession();
-    let allMessages = messages;
-
-    if (existingSession && existingSession.messages) {
-      // Merge existing messages with new ones, avoiding duplicates
-      const existingMessages = existingSession.messages as Message[];
-      const existingMessageIds = new Set(existingMessages.map(m => m.id));
-      const newMessages = messages.filter(m => !existingMessageIds.has(m.id));
-      
-      allMessages = [...existingMessages, ...newMessages];
-    }
-
     const system = await pica.generateSystemPrompt();
 
     const stream = streamText({
@@ -35,26 +22,27 @@ export async function POST(request: Request) {
       tools: {
         ...pica.oneTool,
       },
-      messages: convertToCoreMessages(allMessages),
+      // Use the messages directly from the client (which includes full history)
+      messages: convertToCoreMessages(messages),
       maxSteps: 20,
       onFinish: async (result) => {
         try {
+          // Create the AI's response message
+          const aiResponse: Message = {
+            id: `assistant-${Date.now()}`,
+            role: 'assistant',
+            content: result.text || '',
+            toolInvocations: result.toolCalls?.map(call => ({
+              toolCallId: call.toolCallId,
+              toolName: call.toolName,
+              args: call.args,
+              state: 'result' as const,
+              result: call.result
+            })) || []
+          };
+
           // Update messages with the AI's response
-          const updatedMessages = [
-            ...allMessages,
-            {
-              id: `assistant-${Date.now()}`,
-              role: 'assistant' as const,
-              content: result.text || '',
-              toolInvocations: result.toolCalls?.map(call => ({
-                toolCallId: call.toolCallId,
-                toolName: call.toolName,
-                args: call.args,
-                state: 'result' as const,
-                result: call.result
-              })) || []
-            }
-          ];
+          const updatedMessages = [...messages, aiResponse];
 
           // Parse task information from tool invocations
           const { task, status } = AISessionManager.parseTaskFromToolInvocations(
@@ -78,8 +66,7 @@ export async function POST(request: Request) {
 
     console.log('Chat request processed:', {
       userId,
-      messageCount: allMessages.length,
-      hasExistingSession: !!existingSession
+      messageCount: messages.length
     });
 
     return (await stream).toDataStreamResponse();

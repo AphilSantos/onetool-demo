@@ -8,6 +8,8 @@ import { ChatMessages } from "./components/ChatMessages";
 import { ChatInput } from "./components/ChatInput";
 import { SupabaseTest } from "./components/SupabaseTest";
 import { Modal } from "@/components/ui/modal";
+import { AISessionManager } from "@/lib/ai-session";
+import { Message } from "ai";
 
 export default function Home() {
   const { open } = useAuthKit({
@@ -35,6 +37,31 @@ export default function Home() {
     return 'user_123' // fallback for SSR
   })
 
+  // State for loading initial messages
+  const [initialMessages, setInitialMessages] = useState<Message[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(true);
+
+  // Load existing conversation history on mount
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      try {
+        const sessionManager = new AISessionManager(userId);
+        const existingSession = await sessionManager.getSession();
+        
+        if (existingSession && existingSession.messages) {
+          const messages = existingSession.messages as Message[];
+          setInitialMessages(messages);
+        }
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      } finally {
+        setIsChatLoading(false);
+      }
+    };
+
+    loadChatHistory();
+  }, [userId]);
+
   const {
     messages,
     handleSubmit,
@@ -46,6 +73,7 @@ export default function Home() {
     status,
   } = useChat({
     maxSteps: 20,
+    initialMessages: initialMessages,
     body: {
       userId: userId
     }
@@ -55,15 +83,17 @@ export default function Home() {
   const [showSupabaseModal, setShowSupabaseModal] = useState(true);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (!isChatLoading) {
+      inputRef.current?.focus();
+    }
+  }, [isChatLoading]);
 
   // Add new useEffect to focus after loading completes
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !isChatLoading) {
       inputRef.current?.focus();
     }
-  }, [isLoading]);
+  }, [isLoading, isChatLoading]);
 
   // Hide modal when user starts chatting
   useEffect(() => {
@@ -71,6 +101,18 @@ export default function Home() {
       setShowSupabaseModal(false);
     }
   }, [messages.length]);
+
+  // Don't render chat until we've loaded the initial messages
+  if (isChatLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-dvh">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading conversation...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col justify-between h-dvh">

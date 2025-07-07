@@ -7,6 +7,7 @@ import { Header } from "./components/Header";
 import { ChatMessages } from "./components/ChatMessages";
 import { ChatInput } from "./components/ChatInput";
 import { SupabaseTest } from "./components/SupabaseTest";
+import { Modal } from "@/components/ui/modal";
 
 export default function Home() {
   const { open } = useAuthKit({
@@ -35,6 +36,7 @@ export default function Home() {
   });
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [showSupabaseModal, setShowSupabaseModal] = useState(true);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -47,17 +49,26 @@ export default function Home() {
     }
   }, [isLoading]);
 
+  // Hide modal when user starts chatting
+  useEffect(() => {
+    if (messages.length > 0) {
+      setShowSupabaseModal(false);
+    }
+  }, [messages.length]);
+
   return (
     <div className="flex flex-col justify-between h-dvh">
       <div className="flex flex-col h-full">
         <Header />
         
-        {/* Add Supabase test component when there are no messages */}
-        {messages.length === 0 && (
-          <div className="flex justify-center items-center py-8">
-            <SupabaseTest />
-          </div>
-        )}
+        {/* Supabase Test Modal */}
+        <Modal 
+          isOpen={showSupabaseModal && messages.length === 0}
+          onClose={() => setShowSupabaseModal(false)}
+          title="Supabase Connection Test"
+        >
+          <SupabaseTest />
+        </Modal>
         
         <ChatMessages messages={messages} isLoading={isLoading} />
         <ChatInput

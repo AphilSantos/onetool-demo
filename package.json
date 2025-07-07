@@ -17,6 +17,7 @@
     "@picahq/authkit-node": "^1.0.1",
     "@radix-ui/react-scroll-area": "^1.2.3",
     "@radix-ui/react-slot": "^1.1.2",
+    "@supabase/supabase-js": "^2.50.3",
     "@types/prismjs": "^1.26.5",
     "@vercel/analytics": "^1.3.1",
     "@vercel/kv": "^2.0.0",

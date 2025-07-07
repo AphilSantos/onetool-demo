@@ -6,6 +6,7 @@ import { useAuthKit } from "@picahq/authkit";
 import { Header } from "./components/Header";
 import { ChatMessages } from "./components/ChatMessages";
 import { ChatInput } from "./components/ChatInput";
+import { SupabaseTest } from "./components/SupabaseTest";
 
 export default function Home() {
   const { open } = useAuthKit({
@@ -50,6 +51,14 @@ export default function Home() {
     <div className="flex flex-col justify-between h-dvh">
       <div className="flex flex-col h-full">
         <Header />
+        
+        {/* Add Supabase test component when there are no messages */}
+        {messages.length === 0 && (
+          <div className="flex justify-center items-center py-8">
+            <SupabaseTest />
+          </div>
+        )}
+        
         <ChatMessages messages={messages} isLoading={isLoading} />
         <ChatInput
           inputRef={inputRef}
